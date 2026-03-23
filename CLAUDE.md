@@ -15,13 +15,15 @@ No test runner is configured yet.
 
 ## Architecture
 
-This is a **Vite + React 19** project using plain JavaScript (`.jsx`), not TypeScript.
+This is the frontend of a **monolithic weather application**. It is a **Vite + React 19** project using plain JavaScript (`.jsx`), not TypeScript.
 
 - Entry point: `index.html` → `src/main.jsx` → `src/App.jsx`
 - `src/main.jsx` mounts `<App>` into `#root` with React StrictMode
-- Styles are plain CSS: `src/index.css` (global), `src/App.css` (component-scoped)
-- Static assets served from `public/` (e.g., `icons.svg`, `favicon.svg`)
-- Imported assets (e.g., images, SVGs) live in `src/assets/`
+- `src/App.jsx` fetches `/api/weather` from the Spring Boot backend and renders the weather dashboard
+- Styles are plain CSS: `src/index.css` (global dark gradient theme), `src/App.css` (weather dashboard — glassmorphism cards, stats grid, forecast strip)
+- Static assets served from `public/`; imported assets live in `src/assets/`
+
+In dev mode, `vite.config.js` proxies `/api` requests to `http://localhost:8080` (the backend). In production, the backend serves the compiled `dist/` output directly — no separate Node server.
 
 ## ESLint
 

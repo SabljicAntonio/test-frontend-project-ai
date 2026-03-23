@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { getToken, clearToken, isAuthenticated } from './auth.js'
+import LoginPage from './pages/LoginPage.jsx'
+import RegisterPage from './pages/RegisterPage.jsx'
 import './App.css'
 
 function getWeatherEmoji(icon) {
@@ -40,26 +44,45 @@ function StatCard({ icon, label, value, unit }) {
   )
 }
 
-function App() {
+function ProtectedRoute({ children }) {
+  return isAuthenticated() ? children : <Navigate to="/login" replace />
+}
+
+function WeatherDashboard() {
+  const navigate = useNavigate()
   const [weather, setWeather] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch('/api/weather')
+    fetch('/api/weather', {
+      headers: { 'Authorization': `Bearer ${getToken()}` },
+    })
       .then(res => {
+        if (res.status === 403) {
+          clearToken()
+          navigate('/login', { replace: true })
+          return
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
       .then(data => {
-        setWeather(data)
-        setLoading(false)
+        if (data) {
+          setWeather(data)
+          setLoading(false)
+        }
       })
       .catch(err => {
         setError(err.message)
         setLoading(false)
       })
-  }, [])
+  }, [navigate])
+
+  function handleLogout() {
+    clearToken()
+    navigate('/login', { replace: true })
+  }
 
   if (loading) {
     return (
@@ -81,6 +104,12 @@ function App() {
 
   return (
     <div className="weather-app">
+      <div className="weather-app__header">
+        <button className="btn btn--ghost" onClick={handleLogout}>
+          Sign out
+        </button>
+      </div>
+
       <div className="glass main-card">
         <div className="main-card__left">
           <span className="main-card__location">
@@ -120,6 +149,20 @@ function App() {
         </div>
       </div>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login"    element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/"         element={
+        <ProtectedRoute>
+          <WeatherDashboard />
+        </ProtectedRoute>
+      } />
+    </Routes>
   )
 }
 
